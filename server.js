@@ -2,7 +2,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 const cheerio = require('cheerio');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // 允许express处理JSON请求体
 app.use(express.json());
