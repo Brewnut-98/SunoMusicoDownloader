@@ -1,5 +1,6 @@
 {
-    "rewrites": [
-      { "source": "/sniff", "destination": "/api/sniff" }
-    ]
-  }
+  "rewrites": [
+      { "source": "/sniff", "destination": "/api/sniff" },
+      { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
