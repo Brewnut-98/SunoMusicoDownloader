@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .content, img {
+            margin: 10px auto; /* Centered with vertical spacing */
+            display: block; /* Block-level element */
+        }
+        input[type="text"], button {
+            padding: 10px 20px;
+            margin-top: 5px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        #audioPlayer {
+            width: 100%; /* Audio player width is responsive */
+            max-width: 600px; /* Max width to avoid being too long */
+        }
+        #downloadButton {
+            display: none; /* Initially hidden, shown after content retrieval */
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #coverImage {
+            max-width: 600px; /* Limit width of the cover image */
+            height: auto; /* Height is responsive */
+            display: none; /* Initially hidden, shown after loading */
+        }
+    </style>
+</head>
+<body>
+    <h1>Suno Music Downloader</h1>
+    <div id="urlForm" class="content">
+        <input type="text" id="url" name="url" required placeholder="Input suno music share link" style="width: 30%;">
+        <button type="button" onclick="sniff()">Submit</button>
+    </div>
+    <h2 id="title" class="content" style="display: none;"></h2> <!-- Initially hidden -->
+    <img id="coverImage" alt="Cover Image" /> <!-- Display cover after loading -->
+    <p id="style" class="content" style="display: none;"></p> <!-- Initially hidden -->
+    <audio id="audioPlayer" class="content" controls style="display: none;"></audio>
+    <button id="downloadButton" class="content" onclick="downloadAudio()">Download</button>
+
+    <script>
+        function sniff() {
+            const urlElement = document.getElementById('url');
+            const url = urlElement.value.trim(); // Removes whitespace from both ends
+            if(!url) {
+                alert("Please enter the URL.");
+                return;
+            }
+
+            // Extract the song ID from the URL
+            const songId = url.split('/').pop(); // Caution: Adjust if a different URL pattern
+
+            fetch('/sniff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.audio) {
+                    document.getElementById('title').textContent = data.title;
+                    document.getElementById('title').style.display = 'block';
+                    
+                    const coverImage = document.getElementById('coverImage');
+                    coverImage.src = data.image;
+                    coverImage.style.display = 'block';
+                    
+                    document.getElementById('style').textContent = data.style;
+                    document.getElementById('style').style.display = 'block';
+                    
+                    const audioPlayer = document.getElementById('audioPlayer');
+                    audioPlayer.src = data.audio;
+                    audioPlayer.style.display = 'block';
+                    
+                    const downloadButton = document.getElementById('downloadButton');
+                    downloadButton.style.display = 'block';
+                    downloadButton.setAttribute('data-audio-url', data.audio);
+                } else {
+                    alert('No resources found.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred');
+            });
+        }
+
+        function downloadAudio() {
+    const audioUrl = document.getElementById('downloadButton').getAttribute('data-audio-url');
+    const title = document.getElementById('title').textContent; // Get the title from the title element
+    fetch(audioUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const blobUrl = URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = blobUrl;
+            // Use the song title as the filename, and remove any characters that are invalid for filenames
+            downloadLink.download = title.replace(/[/\\?%*:|"<>]/g, '') + '.mp3';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(blobUrl);
+        })
+        .catch(() => alert('Unable to download the file'));
+}
+    </script>
+</body>
+</html>
